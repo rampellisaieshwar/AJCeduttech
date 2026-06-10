@@ -145,9 +145,10 @@ async function getBase64FromUrl(url) {
         return el;
       }
 
-      // Helper function to classify elements as full-width or two-column
-      function isFullWidth(el) {
+      // Helper function to classify elements as small-table, wide-table, or images
+      function classifyElement(el) {
         const target = getClassifierTarget(el);
+        if (!target) return;
         
         // 1. Table Heuristics
         if (target.tagName === 'TABLE' || target.classList.contains('simple-table')) {
@@ -159,61 +160,26 @@ async function getBase64FromUrl(url) {
           if (cols <= 3 && textLength < 300) {
             target.classList.add('small-table');
             console.log(`[TABLE] cols=${cols} class=small-table`);
-            return false;
           } else {
             target.classList.add('wide-table');
             console.log(`[TABLE] cols=${cols} class=wide-table`);
-            return true;
           }
         }
         
         // 2. Image Heuristics
         if (target.tagName === 'FIGURE' && target.classList.contains('image')) {
-          console.log(`[IMAGE] figure element (full width)`);
-          return true;
+          console.log(`[IMAGE] figure element`);
         }
         if (target.tagName === 'IMG') {
-          console.log(`[IMAGE] img element (full width)`);
-          return true;
+          console.log(`[IMAGE] img element`);
         }
-        
-        return false;
       }
 
-      // Read children one by one and group them
+      // Move children from pageBody directly to contentRoot and classify them on the fly
       const children = Array.from(pageBody.children);
       children.forEach(child => {
-        if (isFullWidth(child)) {
-          // Push previous column section if it has elements
-          if (currentSection.elements.length > 0) {
-            sections.push(currentSection);
-          }
-          // Push full-width section
-          sections.push({ type: 'full-width', elements: [child] });
-          // Reset current section
-          currentSection = { type: 'two-column', elements: [] };
-        } else {
-          currentSection.elements.push(child);
-        }
-      });
-
-      // Push final section
-      if (currentSection.elements.length > 0) {
-        sections.push(currentSection);
-      }
-
-      // Render the sections to the DOM
-      sections.forEach(sec => {
-        const wrapper = document.createElement('div');
-        if (sec.type === 'two-column') {
-          wrapper.className = 'two-column-body';
-        } else {
-          wrapper.className = 'full-width-body';
-        }
-        sec.elements.forEach(el => {
-          wrapper.appendChild(el);
-        });
-        contentRoot.appendChild(wrapper);
+        classifyElement(child);
+        contentRoot.appendChild(child);
       });
 
       // Check title for document header banner
