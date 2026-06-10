@@ -80,12 +80,20 @@
       break-inside: avoid;
     }
 
-    /* Two-column layout */
+    /* Two-column layout block */
     .two-column-body {
       column-count: 2;
       column-gap: 28px;
       column-fill: auto;
       text-align: left;
+      margin-bottom: 14px;
+    }
+
+    /* Full-width layout block */
+    .full-width-body {
+      width: 100%;
+      text-align: left;
+      margin-bottom: 14px;
     }
 
     /* Headings Customizations */
@@ -122,12 +130,16 @@
       margin-top: 0;
       margin-bottom: 8px;
       text-align: justify;
+      orphans: 3;
+      widows: 3;
     }
 
     ul, ol {
       margin-top: 0;
       margin-bottom: 10px;
       padding-left: 18px;
+      orphans: 3;
+      widows: 3;
     }
 
     li {
@@ -156,14 +168,21 @@
       margin-bottom: 4px;
     }
 
-    /* Tables Customization spanning across both columns */
+    /* Tables Customization */
     table, .simple-table {
-      width: 100% !important;
       border-collapse: collapse;
-      margin: 16px 0;
-      break-inside: avoid;
-      column-span: all; /* Spans across both columns */
+      margin: 12px 0;
       font-size: 9px;
+    }
+    table.small-table, .simple-table.small-table {
+      width: 100% !important;
+      column-span: none !important;
+      break-inside: avoid;
+    }
+    table.wide-table, .simple-table.wide-table {
+      width: 100% !important;
+      column-span: all !important;
+      break-inside: avoid;
     }
 
     table th, table td {
@@ -215,7 +234,9 @@
 
     figure.image img, .image img {
       max-width: 100%;
+      max-height: 250px;
       height: auto;
+      object-fit: contain;
       border-radius: 6px;
       border: 1px solid var(--border-color);
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
@@ -261,7 +282,7 @@
     <div class="doc-header-banner" id="banner-placeholder">Economic Growth and Development</div>
     
     <!-- Content starts here -->
-    <div class="two-column-body" id="content-root">
+    <div class="notes-body-root" id="content-root">
       <!-- Notion page-body HTML injected here -->
     </div>
   </div>

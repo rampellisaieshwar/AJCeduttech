@@ -60,6 +60,11 @@ async function getBase64FromUrl(url) {
     });
 
     const page = await browser.newPage();
+
+    // Forward browser console logs to the Node terminal process
+    page.on('console', msg => {
+      console.log(`[BROWSER] ${msg.text()}`);
+    });
     
     // Set viewport size
     await page.setViewport({
@@ -102,11 +107,114 @@ async function getBase64FromUrl(url) {
       // Inject the cleaned body into the template's content root
       const contentRoot = document.getElementById('content-root');
       contentRoot.innerHTML = '';
-      
-      // Move children from pageBody to contentRoot
-      while (pageBody.firstChild) {
-        contentRoot.appendChild(pageBody.firstChild);
+
+      // Set up dynamic column flow grouping
+      const sections = [];
+      let currentSection = { type: 'two-column', elements: [] };
+
+      // Helper function to resolve Notion's nested wrapper divs recursively
+      function getClassifierTarget(el) {
+        if (!el) return el;
+        
+        // Direct checks
+        if (el.tagName === 'TABLE' || el.classList.contains('simple-table')) {
+          return el;
+        }
+        if (el.tagName === 'FIGURE' && el.classList.contains('image')) {
+          return el;
+        }
+        if (el.tagName === 'IMG') {
+          return el;
+        }
+        
+        // Search inside the element to see if it contains tables or images
+        const table = el.querySelector('table, .simple-table');
+        if (table) {
+          return table;
+        }
+        const img = el.querySelector('figure.image, img');
+        if (img) {
+          return img;
+        }
+        
+        // Recursive fallback for other types of wrapper DIVs
+        if (el.tagName === 'DIV' && el.firstElementChild) {
+          return getClassifierTarget(el.firstElementChild);
+        }
+        
+        return el;
       }
+
+      // Helper function to classify elements as full-width or two-column
+      function isFullWidth(el) {
+        const target = getClassifierTarget(el);
+        
+        // 1. Table Heuristics
+        if (target.tagName === 'TABLE' || target.classList.contains('simple-table')) {
+          const firstRow = target.querySelector('tr');
+          const cols = firstRow ? firstRow.querySelectorAll('th, td').length : 0;
+          const textLength = target.innerText ? target.innerText.length : 0;
+          
+          // Heuristic: If <= 3 columns AND short text (< 300 chars), it is small
+          if (cols <= 3 && textLength < 300) {
+            target.classList.add('small-table');
+            console.log(`[TABLE] cols=${cols} class=small-table`);
+            return false;
+          } else {
+            target.classList.add('wide-table');
+            console.log(`[TABLE] cols=${cols} class=wide-table`);
+            return true;
+          }
+        }
+        
+        // 2. Image Heuristics
+        if (target.tagName === 'FIGURE' && target.classList.contains('image')) {
+          console.log(`[IMAGE] figure element (full width)`);
+          return true;
+        }
+        if (target.tagName === 'IMG') {
+          console.log(`[IMAGE] img element (full width)`);
+          return true;
+        }
+        
+        return false;
+      }
+
+      // Read children one by one and group them
+      const children = Array.from(pageBody.children);
+      children.forEach(child => {
+        if (isFullWidth(child)) {
+          // Push previous column section if it has elements
+          if (currentSection.elements.length > 0) {
+            sections.push(currentSection);
+          }
+          // Push full-width section
+          sections.push({ type: 'full-width', elements: [child] });
+          // Reset current section
+          currentSection = { type: 'two-column', elements: [] };
+        } else {
+          currentSection.elements.push(child);
+        }
+      });
+
+      // Push final section
+      if (currentSection.elements.length > 0) {
+        sections.push(currentSection);
+      }
+
+      // Render the sections to the DOM
+      sections.forEach(sec => {
+        const wrapper = document.createElement('div');
+        if (sec.type === 'two-column') {
+          wrapper.className = 'two-column-body';
+        } else {
+          wrapper.className = 'full-width-body';
+        }
+        sec.elements.forEach(el => {
+          wrapper.appendChild(el);
+        });
+        contentRoot.appendChild(wrapper);
+      });
 
       // Check title for document header banner
       const docTitle = tempDiv.querySelector('.page-title')?.textContent || 'Notes';
