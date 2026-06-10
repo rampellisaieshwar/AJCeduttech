@@ -33,6 +33,94 @@ async function getBase64FromUrl(url) {
   }
 }
 
+const useAI = args.includes('--use-ai') || args.includes('-use-ai');
+
+async function runAIEnhancement(htmlContent) {
+  const apiKey = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    console.log('[AI WARNING] GEMINI_API_KEY or OPENAI_API_KEY environment variables not found. Skipping AI enhancement.');
+    return htmlContent;
+  }
+
+  try {
+    console.log('Sending notes to AI layout enhancement engine...');
+    if (process.env.GEMINI_API_KEY) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
+      const prompt = `You are an expert educational document designer. 
+Analyze the following HTML study guide notes and enhance it with premium educational content:
+1. Add a brief, high-level "AI-Generated Summary" (under a styled heading h2 with green color) at the very beginning of the notes.
+2. Identify 3 key concepts from the text and represent them as callouts (using class="callout" and class="callout-title" with rocket icon).
+3. Append a "Key Takeaways & Revision Notes" section at the very end of the document.
+4. Keep the original HTML structure and text fully intact. Do not lose any existing details or sections. Only insert the new summary, callouts, and key takeaways at the appropriate locations.
+5. Return the full updated HTML document. Do not wrap it in markdown code blocks or backticks.
+
+HTML Content:
+${htmlContent}`;
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Gemini API returned status ${response.status}`);
+      }
+
+      const data = await response.json();
+      let aiText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      
+      if (aiText) {
+        aiText = aiText.replace(/^```html\s*/i, '').replace(/```$/, '').trim();
+        console.log('AI enhancement completed successfully!');
+        return aiText;
+      }
+    } else if (process.env.OPENAI_API_KEY) {
+      const url = 'https://api.openai.com/v1/chat/completions';
+      const prompt = `You are an expert educational document designer. 
+Analyze the following HTML study guide notes and enhance it with premium educational content:
+1. Add a brief, high-level "AI-Generated Summary" (under a styled heading h2 with green color) at the very beginning of the notes.
+2. Identify 3 key concepts from the text and represent them as callouts (using class="callout" and class="callout-title" with rocket icon).
+3. Append a "Key Takeaways & Revision Notes" section at the very end of the document.
+4. Keep the original HTML structure and text fully intact. Do not lose any existing details or sections. Only insert the new summary, callouts, and key takeaways at the appropriate locations.
+5. Return the full updated HTML document. Do not wrap it in markdown code blocks or backticks.
+
+HTML Content:
+${htmlContent}`;
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.2
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`OpenAI API returned status ${response.status}`);
+      }
+
+      const data = await response.json();
+      let aiText = data.choices?.[0]?.message?.content;
+      if (aiText) {
+        aiText = aiText.replace(/^```html\s*/i, '').replace(/```$/, '').trim();
+        console.log('AI enhancement completed successfully!');
+        return aiText;
+      }
+    }
+  } catch (err) {
+    console.warn('AI enhancement API call failed, falling back to standard layout:', err.message);
+  }
+  return htmlContent;
+}
+
 (async () => {
   let browser;
   try {
@@ -41,7 +129,11 @@ async function getBase64FromUrl(url) {
     }
 
     console.log('Reading raw HTML notes...');
-    const rawNotionHtml = fs.readFileSync(inputHtmlPath, 'utf8');
+    let rawNotionHtml = fs.readFileSync(inputHtmlPath, 'utf8');
+
+    if (useAI) {
+      rawNotionHtml = await runAIEnhancement(rawNotionHtml);
+    }
 
     // Load templates paths
     const templatePath = path.resolve(__dirname, 'template_pdf.html');
