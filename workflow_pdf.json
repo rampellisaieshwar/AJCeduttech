@@ -1,0 +1,141 @@
+{
+  "id": "1",
+  "name": "Automated PDF Study Notes Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "render-pdf",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger-id",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const body = $input.item.json.body || $input.item.json || {};\n\n// Fallback to the local project task file if no path is passed\nconst inputHtmlPath = body.inputHtmlPath || \"/Users/saieshwarrampelli/Downloads/Anuj Jindal Task/Notes Economic Growth and Development 118b820004a246028d53c0d80e25b5f3.html\";\n\n// Generate a unique timestamped output path\nconst timestamp = new Date().toISOString().replace(/[-:.]/g, \"\").substring(0, 15);\nconst outputPath = body.outputPath || `/Users/saieshwarrampelli/Downloads/LevelUp/AJCeduttech/output/study_notes_${timestamp}.pdf`;\n\nreturn {\n  json: {\n    inputHtmlPath,\n    outputPath\n  }\n};"
+      },
+      "id": "parser-id",
+      "name": "Parse Request Parameters",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        350,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "command": "=node \"/Users/saieshwarrampelli/Downloads/LevelUp/AJCeduttech/renderer_pdf.js\" \"{{ $json.inputHtmlPath }}\" \"{{ $json.outputPath }}\""
+      },
+      "id": "execute-renderer-id",
+      "name": "Execute Puppeteer PDF Renderer",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        600,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "fileSource": "local",
+        "filePath": "={{ $node[\"Parse Request Parameters\"].json.outputPath }}",
+        "dataPropertyName": "data",
+        "options": {}
+      },
+      "id": "read-pdf-id",
+      "name": "Read Rendered PDF File",
+      "type": "n8n-nodes-base.readBinaryFile",
+      "typeVersion": 1,
+      "position": [
+        850,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "binary",
+        "binaryPropertyName": "data",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/pdf"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-with-pdf-id",
+      "name": "Respond with PDF Binary",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Request Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Request Parameters": {
+      "main": [
+        [
+          {
+            "node": "Execute Puppeteer PDF Renderer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Puppeteer PDF Renderer": {
+      "main": [
+        [
+          {
+            "node": "Read Rendered PDF File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Rendered PDF File": {
+      "main": [
+        [
+          {
+            "node": "Respond with PDF Binary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionTimeout": 120
+  },
+  "meta": {
+    "templateId": "ajc-edutech-automated-pdf-study-notes"
+  }
+}

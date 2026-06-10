@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Formatted Study Notes</title>
+  <!-- Load Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --primary-blue: #1B71AC;
+      --primary-green: #2AB573;
+      --dark-text: #1E293B;
+      --light-text: #64748B;
+      --border-color: #E2E8F0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Page Setup for Screen View */
+    html, body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--dark-text);
+      background-color: #FFFFFF;
+      font-size: 10px;
+      line-height: 1.5;
+    }
+
+    body {
+      padding: 0;
+      margin: 0;
+    }
+
+    /* Watermark centered on every page using fixed positioning */
+    .watermark-container {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 280px;
+      height: auto;
+      opacity: 0.12; /* Light watermark that won't block text readability */
+      z-index: -1000;
+      pointer-events: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .watermark-container img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* Container for layout styling */
+    .notes-container {
+      padding: 0;
+      margin: 0;
+    }
+
+    /* Document Title Banner */
+    .doc-header-banner {
+      background-color: var(--primary-green);
+      color: #FFFFFF;
+      padding: 8px 16px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 18px;
+      border-radius: 4px;
+      display: inline-block;
+      break-inside: avoid;
+    }
+
+    /* Two-column layout */
+    .two-column-body {
+      column-count: 2;
+      column-gap: 28px;
+      column-fill: auto;
+      text-align: left;
+    }
+
+    /* Headings Customizations */
+    h1, h2, h3, h4 {
+      break-after: avoid;
+      break-inside: avoid;
+      font-weight: 700;
+      line-height: 1.25;
+      margin-top: 16px;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      font-size: 13.5px;
+      color: var(--primary-blue);
+      border-bottom: 1.5px solid var(--primary-green);
+      padding-bottom: 3px;
+    }
+
+    h2 {
+      font-size: 11.5px;
+      color: var(--primary-green);
+      margin-top: 14px;
+    }
+
+    h3 {
+      font-size: 10.5px;
+      color: var(--dark-text);
+      margin-top: 12px;
+    }
+
+    /* Paragraphs and lists flow */
+    p {
+      margin-top: 0;
+      margin-bottom: 8px;
+      text-align: justify;
+    }
+
+    ul, ol {
+      margin-top: 0;
+      margin-bottom: 10px;
+      padding-left: 18px;
+    }
+
+    li {
+      margin-bottom: 5px;
+    }
+
+    /* Custom Bullet Points */
+    ul > li {
+      list-style-type: none;
+      position: relative;
+    }
+
+    ul > li::before {
+      content: "•";
+      position: absolute;
+      left: -12px;
+      color: var(--primary-green);
+      font-weight: 900;
+      font-size: 11px;
+      top: -1px;
+    }
+
+    /* Nested list elements alignment */
+    li > ul, li > ol {
+      margin-top: 4px;
+      margin-bottom: 4px;
+    }
+
+    /* Tables Customization spanning across both columns */
+    table, .simple-table {
+      width: 100% !important;
+      border-collapse: collapse;
+      margin: 16px 0;
+      break-inside: avoid;
+      column-span: all; /* Spans across both columns */
+      font-size: 9px;
+    }
+
+    table th, table td {
+      border: 1px solid var(--border-color);
+      padding: 6px 8px;
+      text-align: left;
+    }
+
+    table th {
+      background-color: #F8FAFC;
+      font-weight: 700;
+      color: var(--primary-blue);
+      border-bottom: 2px solid var(--primary-green);
+    }
+
+    table tr:nth-child(even) td {
+      background-color: #F8FAFC;
+    }
+
+    /* Callouts / Knowledge Nuggets */
+    .callout {
+      background-color: rgba(42, 181, 115, 0.08) !important;
+      border: 1px solid var(--primary-green) !important;
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin: 14px 0;
+      break-inside: avoid;
+      display: block;
+      color: #334155;
+    }
+
+    .callout-title {
+      font-weight: 700;
+      color: var(--primary-green);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+    }
+
+    /* Image Customization */
+    figure.image, .image {
+      margin: 14px 0;
+      text-align: center;
+      break-inside: avoid;
+      width: 100%;
+    }
+
+    figure.image img, .image img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Highlight Markers mapping from Notion classes */
+    mark {
+      background-color: transparent;
+      color: inherit;
+    }
+
+    .highlight-blue {
+      color: var(--primary-blue) !important;
+      font-weight: 700;
+    }
+
+    .highlight-teal {
+      color: var(--primary-green) !important;
+      font-weight: 700;
+    }
+
+    .highlight-orange_background, .highlight-yellow_background {
+      background-color: rgba(42, 181, 115, 0.12) !important;
+      padding: 1px 3px;
+      border-radius: 3px;
+      font-weight: 600;
+    }
+
+    /* Hide table of contents block if we want clean notes, or style it */
+    nav.table_of_contents {
+      display: none; /* Reference notes don't display the Notion TOC in the body */
+    }
+  </style>
+</head>
+<body>
+  <!-- Centered Watermark Logo -->
+  <div class="watermark-container">
+    <img src="https://anujjindal.in/wp-content/uploads/2023/02/LOGO-CROP.png" alt="Watermark Logo">
+  </div>
+
+  <div class="notes-container">
+    <!-- Section Banner -->
+    <div class="doc-header-banner" id="banner-placeholder">Economic Growth and Development</div>
+    
+    <!-- Content starts here -->
+    <div class="two-column-body" id="content-root">
+      <!-- Notion page-body HTML injected here -->
+    </div>
+  </div>
+</body>
+</html>

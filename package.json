@@ -1,0 +1,13 @@
+{
+  "name": "aviara-labs-renderer",
+  "version": "1.0.0",
+  "description": "Puppeteer-based automated social media post renderer for Anuj Jindal portal",
+  "main": "renderer.js",
+  "scripts": {
+    "test": "node renderer.js sample_input.json output/sample_output.png"
+  },
+  "dependencies": {
+    "puppeteer": "^22.10.0"
+  },
+  "private": true
+}
